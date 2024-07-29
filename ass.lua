@@ -1812,45 +1812,19 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		-- end
 
-		if OPTIONS.noscripts then
-			ldecompile = function()
-				return "-- Decompiling is disabled"
-			end
-		elseif Decompiler then
-			local decomp = construct_TimeoutHandler(Timeout, Decompiler, "Decompiler timed out")
-			local getbytecode = construct_TimeoutHandler(3, getscriptbytecode) -- ? Solara fix
-
-			ldecompile = function(script)
-return decompile(script)
-				end
-				local ok, result = run_with_loading("Decompiling " .. script.Name, true, nil, decomp, script)
-				if not result then
-					ok, result = false, "Empty Output"
-				end
-
-				local output
-				if ok then
-					result = string.gsub(result, "\0", "\\0") -- ? Some decompilers sadly output \0 which prevents files from opening
-					output = result
-				else
-					output = "--[[ Failed to decompile\nReason:\n" .. (result or "") .. "\n]]"
-				end
-
-				if ScriptCache and hashed_bytecode then -- TODO there might(?) be an edgecase where it manages to decompile (built-in) even though getscriptbytecode failed, and the output won't get cached
-					ldeccache[hashed_bytecode] = output -- ? Should we cache even if it timed out?
-					if __DEBUG_MODE then
-						warn("Cached", script:GetFullName())
-					end
-				end
-
-				return output
-			end
-		else
-			ldecompile = function()
-				return "-- Decompiling is NOT supported on your executor"
-			end
-		end
-	end
+if OPTIONS.noscripts then
+    ldecompile = function()
+        return "-- Decompiling is disabled"
+    end
+elseif Decompiler then
+    ldecompile = function(script)
+        return decompile(script)
+    end
+else
+    ldecompile = function()
+        return "-- Decompiling is NOT supported on your executor"
+    end
+end
 
 	local function getsafeproperty(instance, propertyName)
 		return instance[propertyName]
